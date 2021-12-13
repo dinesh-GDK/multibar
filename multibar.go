@@ -3,7 +3,6 @@ package multibar
 import (
 	"fmt"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -149,9 +148,12 @@ func (p *ProgressBar) Update(progress int) {
 		percent = padding + strconv.Itoa(asInt) + "% "
 	}
 
-	timeElapsed := ""
+	timeElapsed := " "
+	// if p.ShowTimeElapsed {
+	// 	timeElapsed = " " + prettyTime(time.Since(p.StartTime))
+	// }
 	if p.ShowTimeElapsed {
-		timeElapsed = " " + prettyTime(time.Since(p.StartTime))
+		timeElapsed += prettyTime(time.Since(p.StartTime))
 	}
 
 	// record where we are, jump to the progress bar, update it, jump back
@@ -163,15 +165,37 @@ func (p *ProgressBar) Update(progress int) {
 }
 
 func prettyTime(t time.Duration) string {
-	re, err := regexp.Compile(`(\d+).(\d+)(\w+)`)
-	if err != nil {
-		return err.Error()
+
+	// minutes := strconv.Itoa(int(t.Minutes()))
+	// seconds := strconv.Itoa(int(t.Seconds()))
+
+	minutes := int(t.Minutes())
+	seconds := int(t.Seconds())
+
+	seconds -= 60 * minutes
+
+	disp_min := strconv.Itoa(minutes)
+	disp_sec := strconv.Itoa(seconds)
+
+	if minutes < 10 {
+		disp_min = "0" + disp_min
 	}
-	parts := re.FindSubmatch([]byte(t.String()))
-	if len(parts) != 4 {
-		return "---"
+
+	if seconds < 10 {
+		disp_sec = "0" + disp_sec
 	}
-	return string(parts[1]) + string(parts[3])
+
+	return disp_min + " m " + disp_sec + " s"
+
+	// re, err := regexp.Compile(`(\d+).(\d+)(\w+)`)
+	// if err != nil {
+	// 	return err.Error()
+	// }
+	// parts := re.FindSubmatch([]byte(t.String()))
+	// if len(parts) != 4 {
+	// 	return "---"
+	// }
+	// return string(parts[1]) + string(parts[3])
 }
 
 func (b *BarContainer) addedNewlines(count int) {
